@@ -7,10 +7,10 @@
 
 #include <float.h>
 #include <raylib.h>
-#include <raymath.h>
+//#include <raymath.h>
 
-#include "nn.h"
-
+#include <nn.h>
+/*
 #ifndef GYM_ASSERT
 #define GYM_ASSERT NN_ASSERT
 #endif // GYM_ASSERT
@@ -357,5 +357,5 @@ Gym_Rect gym_fit_square(Gym_Rect r)
         };
     }
 }
-
+*/
 #endif // GYM_IMPLEMENTATION

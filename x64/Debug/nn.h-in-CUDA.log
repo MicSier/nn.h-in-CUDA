@@ -1,0 +1,38 @@
+﻿  Compiling CUDA source file demos\adder.cu...
+  
+  C:\Users\48733\source\repos\nn.h-in-CUDA>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\bin\HostX64\x64" -x cu   -I"C:\Users\48733\source\repos\nn.h-in-CUDA" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\include" -I"C:\Users\48733\Documents\projekty\vcpkg\installed\x64-windows\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\include"  -G   --keep-dir x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/Fdx64\Debug\vc143.pdb" -o C:\Users\48733\source\repos\nn.h-in-CUDA\x64\Debug\adder.cu.obj "C:\Users\48733\source\repos\nn.h-in-CUDA\demos\adder.cu" 
+C:\Users\48733\source\repos\nn.h-in-CUDA\nn.h(47): warning #1397-D: dllexport/dllimport conflict with "tanhf" (declared at line 8984 of C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\include\crt\math_functions.h); dllimport/dllexport dropped
+    float tanhf(float x);
+          ^
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\Users\48733\source\repos\nn.h-in-CUDA\nn.h(47): warning #1397-D: dllexport/dllimport conflict with "tanhf" (declared at line 721 of C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\corecrt_math.h); dllimport/dllexport dropped
+    float tanhf(float x);
+          ^
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\Users\48733\source\repos\nn.h-in-CUDA\nn-cuda.h(148): warning #20039-D: a __host__ function("sigmoidf") redeclared with __device__, hence treated as a __host__ __device__ function
+    __declspec(__device__) float sigmoidf(float x)
+                                 ^
+  
+C:\Users\48733\source\repos\nn.h-in-CUDA\nn-cuda.h(153): warning #20039-D: a __host__ function("reluf") redeclared with __device__, hence treated as a __host__ __device__ function
+    __declspec(__device__) float reluf(float x)
+                                 ^
+  
+C:\Users\48733\source\repos\nn.h-in-CUDA\nn-cuda.h(165): warning #20039-D: a __host__ function("actf") redeclared with __device__, hence treated as a __host__ __device__ function
+    __declspec(__device__) float actf(float x, Act act)
+                                 ^
+  
+C:\Users\48733\source\repos\nn.h-in-CUDA\nn-cuda.h(177): warning #20039-D: a __host__ function("dactf") redeclared with __device__, hence treated as a __host__ __device__ function
+    __declspec(__device__) float dactf(float y, Act act)
+                                 ^
+  
+  adder.cu
+  tmpxft_000043c8_00000000-7_adder.cudafe1.cpp
+C:\Users\48733\source\repos\nn.h-in-CUDA\nn.h(47): warning C4273: 'tanhf': inconsistent dll linkage
+  C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\include\crt\math_functions.h(8984): note: see previous definition of 'tanhf'
+  nn.h-in-CUDA.vcxproj -> C:\Users\48733\source\repos\nn.h-in-CUDA\x64\Debug\nn.h-in-CUDA.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.

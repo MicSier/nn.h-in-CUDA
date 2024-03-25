@@ -1,8 +1,8 @@
 #define GYM_IMPLEMENTATION
-#include "gym.h"
+#include <gym.h>
 
 #define NN_IMPLEMENTATION
-#include "nn.h"
+#include <nn-cuda.h>
 
 #define BITS 5
 
@@ -14,7 +14,7 @@ size_t batch_size = 28;
 float rate = 1.0f;
 bool paused = true;
 
-void verify_nn_adder(Font font, NN nn, Gym_Rect r)
+/*void verify_nn_adder(Font font, NN nn, Gym_Rect r)
 {
     float s;
     if (r.w < r.h) {
@@ -63,8 +63,8 @@ void verify_nn_adder(Font font, NN nn, Gym_Rect r)
             DrawTextEx(font, buffer, position, fontSize, spacing, WHITE);
         }
     }
-}
-
+}*/
+/*
 int main(void)
 {
     Region temp = region_alloc_alloc(256*1024*1024);
@@ -162,4 +162,35 @@ int main(void)
 
 
     return 0;
+}*/
+
+int main()
+{
+    Region temp = region_alloc_alloc(256); //*1024*1024
+    const int arraySize = 5;
+    const int a[arraySize] = { 1, 2, 3, 4, 5 };
+    const int b[arraySize] = { 10, 20, 30, 40, 50 };
+    int c[arraySize] = { 0 };
+
+    // Add vectors in parallel.
+    cudaError_t cudaStatus = addWithCuda(c, a, b, arraySize);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "addWithCuda failed!");
+        return 1;
+    }
+
+    printf("{1,2,3,4,5} + {10,20,30,40,50} = {%d,%d,%d,%d,%d}\n",
+        c[0], c[1], c[2], c[3], c[4]);
+
+    // cudaDeviceReset must be called before exiting in order for profiling and
+    // tracing tools such as Nsight and Visual Profiler to show complete traces.
+    cudaStatus = cudaDeviceReset();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceReset failed!");
+        return 1;
+    }
+    region_reset(&temp);
+    return 0;
 }
+
+
