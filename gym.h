@@ -9,7 +9,7 @@
 #include <raylib.h>
 //#include <raymath.h>
 
-#include <nn.h>
+#include <nn-cuda.h>
 /*
 #ifndef GYM_ASSERT
 #define GYM_ASSERT NN_ASSERT

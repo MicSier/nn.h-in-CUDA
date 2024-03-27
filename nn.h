@@ -63,6 +63,7 @@ typedef struct {
 Region region_alloc_alloc(size_t capacity_bytes);
 void *region_alloc(Region *r, size_t size_bytes);
 #define region_reset(r) (NN_ASSERT((r) != NULL), (r)->size = 0)
+#define region_free(r) (region_reset(r), cudaFree((r)->words))
 #define region_occupied_bytes(r) (NN_ASSERT((r) != NULL), (r)->size*sizeof(*(r)->words))
 #define region_save(r) (NN_ASSERT((r) != NULL), (r)->size)
 #define region_rewind(r, s) (NN_ASSERT((r) != NULL), (r)->size = s)

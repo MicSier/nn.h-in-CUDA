@@ -1,8 +1,8 @@
 #define GYM_IMPLEMENTATION
-#include <gym.h>
+#include "../gym.h"
 
 #define NN_IMPLEMENTATION
-#include <nn-cuda.h>
+#include "../nn-cuda.h"
 
 #define BITS 5
 
@@ -166,22 +166,31 @@ int main(void)
 
 int main()
 {
-    Region temp = region_alloc_alloc(256); //*1024*1024
+    Region temp = region_alloc_alloc(256*1024);
     const int arraySize = 5;
-    const int a[arraySize] = { 1, 2, 3, 4, 5 };
-    const int b[arraySize] = { 10, 20, 30, 40, 50 };
-    int c[arraySize] = { 0 };
+    const uintptr_t a[arraySize] = { 1, 2, 3, 4, 5 };
+    const uintptr_t b[arraySize] = { 10, 20, 30, 40, 50 };
+    uintptr_t *c;
+    c = new uintptr_t[arraySize];
+
+    uintptr_t *dev_c = (uintptr_t*) region_alloc(&temp, arraySize * sizeof(*c));
+    //cudaMemcpy(dev_c, c, arraySize * sizeof(*c), cudaMemcpyHostToDevice);
+
+    uintptr_t* dev_a = (uintptr_t*) region_alloc_memcpy(&temp, arraySize * sizeof(*a), (void*) a);
+    uintptr_t* dev_b = (uintptr_t*) region_alloc_memcpy(&temp, arraySize * sizeof(*b), (void*) b);
 
     // Add vectors in parallel.
-    cudaError_t cudaStatus = addWithCuda(c, a, b, arraySize);
+    cudaError_t cudaStatus = addWithCuda(dev_c, dev_a, dev_b, arraySize);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "addWithCuda failed!");
         return 1;
     }
-
+    cudaMemcpy(c, dev_c, arraySize * sizeof(*c), cudaMemcpyDeviceToHost);
     printf("{1,2,3,4,5} + {10,20,30,40,50} = {%d,%d,%d,%d,%d}\n",
         c[0], c[1], c[2], c[3], c[4]);
 
+
+    // Clean up
     // cudaDeviceReset must be called before exiting in order for profiling and
     // tracing tools such as Nsight and Visual Profiler to show complete traces.
     cudaStatus = cudaDeviceReset();
@@ -189,7 +198,9 @@ int main()
         fprintf(stderr, "cudaDeviceReset failed!");
         return 1;
     }
-    region_reset(&temp);
+    region_free(&temp);
+    free(c);
+
     return 0;
 }
 
