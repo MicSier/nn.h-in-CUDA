@@ -164,31 +164,64 @@ int main(void)
     return 0;
 }*/
 
+void display_mat(Mat a)
+{
+    printf("---------------------------\n");
+    for (int i = 0; i < a.cols; i++)
+    {
+        for (int j = 0; j < a.rows; j++)
+        {
+            printf("(%d,%d) = %f ",i,j,a.elements[a.cols * i + j]);
+        }
+        printf("\n");
+    }
+    printf("---------------------------\n");
+}
+
+Cuda_Config cuda_configure()
+{
+    int max_threads;
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0); // Assumes device 0
+    cudaDeviceGetAttribute(&max_threads, cudaDevAttrMaxThreadsPerBlock, 0);
+    Cuda_Config config = { max_threads };
+    return config;
+}
+
 int main()
 {
-    Region temp = region_alloc_alloc(256*1024);
-    const int arraySize = 5;
-    const uintptr_t a[arraySize] = { 1, 2, 3, 4, 5 };
-    const uintptr_t b[arraySize] = { 10, 20, 30, 40, 50 };
-    uintptr_t *c;
-    c = new uintptr_t[arraySize];
+    Cuda_Config cuda_config = cuda_configure();
+    Region temp = region_alloc_alloc(256*1024*1024);
+    const int n = 1024;
 
-    uintptr_t *dev_c = (uintptr_t*) region_alloc(&temp, arraySize * sizeof(*c));
-    //cudaMemcpy(dev_c, c, arraySize * sizeof(*c), cudaMemcpyHostToDevice);
+    Mat a = mat_alloc(NULL,n,n);
+    Mat b = mat_alloc(NULL,n,n);
 
-    uintptr_t* dev_a = (uintptr_t*) region_alloc_memcpy(&temp, arraySize * sizeof(*a), (void*) a);
-    uintptr_t* dev_b = (uintptr_t*) region_alloc_memcpy(&temp, arraySize * sizeof(*b), (void*) b);
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            a.elements[n * i + j] = i + j;
+            b.elements[n * i + j] = i - j;
+        }
+    }    
+
+    Mat dev_c =  mat_alloc(&temp, n , n);
+
+    Mat dev_a =  mat_alloc_memcpy(&temp, n,n, a);
+    Mat dev_b = mat_alloc_memcpy(&temp, n,n, b);
 
     // Add vectors in parallel.
-    cudaError_t cudaStatus = addWithCuda(dev_c, dev_a, dev_b, arraySize);
+    cudaError_t cudaStatus = addWithCuda(dev_c, dev_a, dev_b, n, cuda_config);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "addWithCuda failed!");
         return 1;
     }
-    cudaMemcpy(c, dev_c, arraySize * sizeof(*c), cudaMemcpyDeviceToHost);
-    printf("{1,2,3,4,5} + {10,20,30,40,50} = {%d,%d,%d,%d,%d}\n",
-        c[0], c[1], c[2], c[3], c[4]);
-
+    Mat c = mat_alloc_memcpy(NULL, n, n, dev_c);
+    
+    //display_mat(a);
+    //display_mat(b);
+    //display_mat(c);
 
     // Clean up
     // cudaDeviceReset must be called before exiting in order for profiling and
@@ -199,7 +232,9 @@ int main()
         return 1;
     }
     region_free(&temp);
-    free(c);
+    free(a.elements);
+    free(b.elements);
+    free(c.elements);
 
     return 0;
 }

@@ -139,8 +139,12 @@ typedef struct {
 
 void batch_process(Region *r, Batch *b, size_t batch_size, NN nn, Mat t, float rate);
 
-cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size);
-__global__ void addKernel(int* c, const int* a, const int* b);
+typedef struct {
+    int max_threads_per_block;
+} Cuda_Config;
+
+cudaError_t addWithCuda(Mat *c, const Mat *a, const Mat *b, unsigned int size);
+__global__ void addKernel(Mat* c, const Mat* a, const Mat* b);
 
 #endif // NN_H_
 
@@ -197,6 +201,18 @@ Mat mat_alloc(Region *r, size_t rows, size_t cols)
     return m;
 }
 
+Mat mat_alloc_memcpy(Region *r, size_t rows, size_t cols, Mat data)
+{
+    cudaMemcpyKind mcpy_kind = ((r == NULL) ? cudaMemcpyDeviceToHost : cudaMemcpyHostToDevice);
+    Mat m;
+    m.rows = rows;
+    m.cols = cols;
+    m.elements = (float*) region_alloc(r, sizeof(*m.elements)*rows*cols);
+    NN_ASSERT(m.elements != NULL);
+
+    cudaMemcpy(m.elements, data.elements, sizeof(*m.elements)*rows*cols, mcpy_kind);
+    return m;
+}
 NN nn_alloc(Region *r, size_t *arch, size_t arch_count)
 {
     NN_ASSERT(arch_count > 0);
@@ -273,19 +289,25 @@ Row mat_row(Mat m, size_t row)
 }
 
 
-__global__ void addKernel(uintptr_t *c, const uintptr_t *a, const uintptr_t *b)
+__global__ void addKernel(Mat c, const Mat a, const Mat b, const int size)
 {
-    int i = threadIdx.x;
-    c[i] = a[i] + b[i];
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+    int col = blockIdx.y * blockDim.y + threadIdx.y;    
+    int index = row + col* size;
+    if (row < size && col < size) {
+        c.elements[index] = a.elements[index] + b.elements[index];
+    }
 }
 
 // Helper function for using CUDA to add vectors in parallel.
-cudaError_t addWithCuda(uintptr_t *c, const uintptr_t *a, const uintptr_t *b, unsigned int size)
+cudaError_t addWithCuda(Mat c, const Mat a, const Mat b, unsigned int size, Cuda_Config cuda_config)
 {
     cudaError_t cudaStatus;
-
-    // Launch a kernel on the GPU with one thread for each element.
-    addKernel<<<1, size>>>(c, a, b);
+    int threads = sqrt(cuda_config.max_threads_per_block);
+    int blocks = size / threads + (size % threads != 0);
+    dim3 gridSize(blocks, blocks);
+    dim3 blockSize(threads, threads);
+    addKernel <<< gridSize, blockSize >>>  (c, a, b, size);
 
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
@@ -301,7 +323,6 @@ cudaError_t addWithCuda(uintptr_t *c, const uintptr_t *a, const uintptr_t *b, un
         fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching addKernel!\n", cudaStatus);
         return cudaStatus; 
     }
-
     
     return cudaStatus;
 }
